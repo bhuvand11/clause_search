@@ -87,9 +87,9 @@ Run these in order from the repo root. Times are on a laptop CPU (Intel i5-11320
 | Step | Command | Time |
 |---|---|---|
 | 1. Data | `python -m src.data` | < 1 min |
-| 2. Improvement loop (writes `configs/final.yaml`, appends to `experiments/log.jsonl`) | `python -m src.improve` | ~40 min cold, ~5 min with caches |
+| 2. Improvement loop (writes `configs/final.yaml`, appends to `experiments/log.jsonl`) | `python -m src.improve` | ~30 min cold, ~2 min with caches |
 | 3. Train metrics | `python -m src.evaluate --config configs/baseline.yaml --split train --out experiments/baseline_train.json` and the same with `final` | seconds (baseline), ~10 min cold (final) |
-| 4. Test metrics | `python -m src.evaluate --config configs/baseline.yaml --split test --out experiments/baseline_test.json` and the same with `final` | seconds (baseline), ~3 min (final) |
+| 4. Test metrics | `python -m src.evaluate --config configs/baseline.yaml --split test --out experiments/baseline_test.json` and the same with `final` | seconds (baseline), < 1 min (final, after step 3) |
 
 Step 4 appends to `experiments/test_runs.log`. Results are deterministic: no random sampling is
 used at inference, the bootstrap uses a fixed seed, and the router's arithmetic does not depend
@@ -125,7 +125,7 @@ Where the brief left room for interpretation:
 
 ## AI tool usage
 
-Claude Code (Anthropic) was used as a pair programmer: to read the dataset card and the
+Claude was used as a pair programmer: to read the dataset card and the
 LegalBench-RAG source code, to write first drafts of modules, tests and documentation, and to
 debug. Design decisions (metrics, objective and guardrails, the unanswerable set, which components
 to try) were discussed and reviewed by me, and I can explain and modify every part of the code.
