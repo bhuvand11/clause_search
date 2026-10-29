@@ -5,4 +5,5 @@ sentence-transformers
 numpy
 pyyaml
 rank-bm25
+streamlit
 pytest

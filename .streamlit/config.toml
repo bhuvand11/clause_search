@@ -1,0 +1,14 @@
+# Streamlit look and feel for app.py: a quiet, document-style light theme.
+[theme]
+base = "light"
+primaryColor = "#23395B"
+backgroundColor = "#FBFAF7"
+secondaryBackgroundColor = "#F2EFE8"
+textColor = "#1F1F1F"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

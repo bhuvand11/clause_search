@@ -106,6 +106,15 @@ def load_benchmark(data_dir: Path = DATA_DIR):
     return queries, corpus
 
 
+def contract_titles(queries) -> dict[str, str]:
+    """Readable name per contract, taken from the 'Consider the <title>;' part of its queries."""
+    titles = {}
+    for q in queries:
+        head = q["query"].split(";", 1)[0]
+        titles.setdefault(q["snippets"][0]["file_path"], head.removeprefix("Consider ").removeprefix("the "))
+    return titles
+
+
 def verify_offsets(queries, corpus) -> None:
     for q in queries:
         for s in q["snippets"]:

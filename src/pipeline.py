@@ -59,15 +59,20 @@ class Pipeline:
 
         self.abstention = config.get("abstention", {})
 
-    def route(self, query: str) -> tuple[list[str] | None, float | None]:
-        """Contracts to search (None = all) and how well the best one matches the title."""
+    def route(self, query: str, contract: str | None = None) -> tuple[list[str] | None, float | None]:
+        """Contracts to search (None = all) and how well the best one matches the title.
+
+        If the user picked a contract, search only that one and skip title matching.
+        """
+        if contract:
+            return [contract], None
         title, _ = parse_query(query)
         if not (self.router and title):
             return None, None
         ranked_docs = self.router.rank(title)
         return [fp for fp, _ in ranked_docs[: self.routing.get("top_docs", 1)]], ranked_docs[0][1]
 
-    def retrieve(self, query: str, k: int) -> tuple[list[dict], str | None]:
+    def retrieve(self, query: str, k: int, contract: str | None = None) -> tuple[list[dict], str | None]:
         """Top-k passages and an abstention reason (None means: answer).
 
         The ranked list is returned even when abstaining, so evaluation can
@@ -78,7 +83,7 @@ class Pipeline:
         text = question if (use_question_only and title) else query
 
         scores = self.retriever.scores(text).astype(float)
-        allowed, doc_score = self.route(query)
+        allowed, doc_score = self.route(query, contract)
         if allowed is not None:
             scores[~np.isin(self.chunk_doc, allowed)] = -np.inf
 
@@ -105,15 +110,15 @@ class Pipeline:
             return "no passages"
         min_doc = self.abstention.get("min_doc_score")
         if min_doc is not None and doc_score is not None and doc_score < min_doc:
-            return f"no indexed contract matches the title (match {doc_score:.2f} < {min_doc})"
+            return f"no indexed contract matches the title (match {doc_score:.2f} < {min_doc:.2f})"
         min_score = self.abstention.get("min_score")
         if min_score is not None and results[0]["score"] < min_score:
-            return f"no passage is relevant enough (best {results[0]['score']:.2f} < {min_score})"
+            return f"no passage is relevant enough (best {results[0]['score']:.2f} < {min_score:.2f})"
         return None
 
-    def search(self, query: str, k: int | None = None) -> tuple[list[dict], str | None]:
+    def search(self, query: str, k: int | None = None, contract: str | None = None) -> tuple[list[dict], str | None]:
         """What a user sees: top-k passages with text, or [] plus the reason for abstaining."""
-        results, reason = self.retrieve(query, k or self.config["top_k"])
+        results, reason = self.retrieve(query, k or self.config["top_k"], contract)
         if reason:
             return [], reason
         for r in results:
