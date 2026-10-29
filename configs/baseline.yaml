@@ -1,0 +1,10 @@
+# Baseline: the simplest reasonable pipeline. Every later result is compared to this.
+chunking:
+  method: fixed     # fixed-size character windows, like the paper's "naive" method
+  size: 500
+  overlap: 0
+retrieval:
+  method: bm25      # keyword matching
+top_k: 8            # passages shown to a user
+abstention:
+  min_score: null   # null = never abstain
