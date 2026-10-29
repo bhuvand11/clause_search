@@ -170,8 +170,14 @@ def calibrate(result: dict) -> tuple[float | None, float | None]:
     """Thresholds that catch the most unanswerable queries with <= 5% false abstention.
 
     A query abstains if its title match < doc threshold or its best passage
-    score < score threshold. Candidate thresholds are the observed scores.
+    score < score threshold. Candidate thresholds are midpoints between
+    consecutive observed scores, so no threshold sits exactly on a query's
+    score (where float noise in the last digit could flip the decision).
     """
+    def midpoints(values):
+        v = sorted(set(x for x in values if np.isfinite(x)))
+        return [(a + b) / 2 for a, b in zip(v, v[1:])]
+
     def arrays(rows):
         doc = np.array([r["doc_score"] if r["doc_score"] is not None else np.inf for r in rows])
         top = np.array([r["ranked"][0]["score"] if r["ranked"] else -np.inf for r in rows])
@@ -180,8 +186,8 @@ def calibrate(result: dict) -> tuple[float | None, float | None]:
     b_doc, b_top = arrays(result["per_query"])
     u_doc, u_top = arrays(result["unanswerable"])
     max_false = int(MAX_FALSE_ABSTENTION * len(b_doc))
-    doc_options = [None] + sorted(set(b_doc[np.isfinite(b_doc)]))
-    top_options = [None] + sorted(set(b_top[np.isfinite(b_top)]))
+    doc_options = [None] + midpoints(np.concatenate([b_doc, u_doc]))
+    top_options = [None] + midpoints(np.concatenate([b_top, u_top]))
 
     best = (-1, 0, None, None)  # (caught, -false, doc_thr, top_thr)
     for dt_ in doc_options:

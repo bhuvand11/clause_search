@@ -18,6 +18,7 @@ from rank_bm25 import BM25Okapi
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 CACHE_DIR = Path(__file__).resolve().parent.parent / "data" / "cache"
 _MODELS = {}  # loaded models, shared across pipelines in one process
+_RERANK_CACHES = {}  # reranker score caches, shared the same way
 
 
 def tokenize(text: str) -> list[str]:
@@ -100,9 +101,10 @@ class Reranker:
 
     def __init__(self, model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
         self.model = _load("cross", model)
-        self.name = model
         self.path = CACHE_DIR / f"rerank_{hashlib.sha1(model.encode()).hexdigest()[:8]}.json"
-        self.cache = json.loads(self.path.read_text()) if self.path.exists() else {}
+        if self.path not in _RERANK_CACHES:  # one shared cache per model, so instances don't overwrite each other
+            _RERANK_CACHES[self.path] = json.loads(self.path.read_text()) if self.path.exists() else {}
+        self.cache = _RERANK_CACHES[self.path]
 
     def _key(self, query: str, text: str) -> str:
         return hashlib.sha1(f"{query}\x00{text}".encode("utf-8")).hexdigest()
@@ -138,7 +140,7 @@ class DocRouter:
         self.idf = lambda t: math.log((n + 1) / (df.get(t, 0) + 0.5))
 
     def rank(self, title: str) -> list[tuple[str, float]]:
-        terms = set(tokenize(title))
+        terms = sorted(set(tokenize(title)))  # sorted: float sums must not depend on set order
         total = sum(self.idf(t) for t in terms) or 1.0
         scored = [(fp, sum(self.idf(t) for t in terms if t in vocab) / total)
                   for fp, vocab in zip(self.doc_ids, self.vocab)]

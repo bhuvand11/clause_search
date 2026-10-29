@@ -32,7 +32,9 @@ def test_calibrate_catches_unknown_titles_without_false_abstention():
     unans = [{"doc_score": 0.2, "ranked": [{"score": 3.0}]},   # unknown contract
              {"doc_score": None, "ranked": [{"score": -9.0}]}]  # off-topic, low passage score
     doc_thr, score_thr = calibrate(result(rows, unans))
-    assert 0.2 < doc_thr <= 0.95 and -9.0 < score_thr <= -2.0
+    assert 0.2 < doc_thr < 0.95 and -9.0 < score_thr < -2.0
+    observed = {r["doc_score"] for r in rows} | {r["ranked"][0]["score"] for r in rows}
+    assert doc_thr not in observed and score_thr not in observed  # thresholds sit between scores
 
 
 def test_decide_rejects_precision_guardrail_and_accepts_clear_win():
