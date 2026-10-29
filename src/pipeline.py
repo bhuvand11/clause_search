@@ -59,6 +59,14 @@ class Pipeline:
 
         self.abstention = config.get("abstention", {})
 
+    def route(self, query: str) -> tuple[list[str] | None, float | None]:
+        """Contracts to search (None = all) and how well the best one matches the title."""
+        title, _ = parse_query(query)
+        if not (self.router and title):
+            return None, None
+        ranked_docs = self.router.rank(title)
+        return [fp for fp, _ in ranked_docs[: self.routing.get("top_docs", 1)]], ranked_docs[0][1]
+
     def retrieve(self, query: str, k: int) -> tuple[list[dict], str | None]:
         """Top-k passages and an abstention reason (None means: answer).
 
@@ -70,11 +78,8 @@ class Pipeline:
         text = question if (use_question_only and title) else query
 
         scores = self.retriever.scores(text).astype(float)
-        doc_score = None
-        if self.router and title:
-            ranked_docs = self.router.rank(title)
-            doc_score = ranked_docs[0][1]
-            allowed = [fp for fp, _ in ranked_docs[: self.routing.get("top_docs", 1)]]
+        allowed, doc_score = self.route(query)
+        if allowed is not None:
             scores[~np.isin(self.chunk_doc, allowed)] = -np.inf
 
         n = self.rerank_cfg.get("candidates", 20) if self.reranker else 0

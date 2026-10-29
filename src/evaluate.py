@@ -26,7 +26,7 @@ def evaluate(pipeline: Pipeline, queries: list[dict], unanswerable: list[dict]) 
     for q in queries:
         ranked, reason = pipeline.retrieve(q["query"], max(KS))
         gold = [(s["file_path"], *s["span"]) for s in q["snippets"]]
-        row = {"query": q["query"], "gold": gold, "ranked": ranked,
+        row = {"query": q["query"], "gold": gold, "ranked": ranked, "doc_score": pipeline.route(q["query"])[1],
                "abstained": reason is not None, "abstain_reason": reason}
         for k in KS:
             retrieved = [(r["file_path"], r["start"], r["end"]) for r in ranked[:k]]
@@ -38,6 +38,7 @@ def evaluate(pipeline: Pipeline, queries: list[dict], unanswerable: list[dict]) 
     for u in unanswerable:
         ranked, reason = pipeline.retrieve(u["query"], pipeline.config["top_k"])
         unans.append({"id": u["id"], "category": u["category"], "query": u["query"],
+                      "doc_score": pipeline.route(u["query"])[1],
                       "abstained": reason is not None, "abstain_reason": reason, "ranked": ranked})
 
     def mean(xs):
