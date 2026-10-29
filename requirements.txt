@@ -1,0 +1,4 @@
+numpy
+pyyaml
+rank-bm25
+pytest
