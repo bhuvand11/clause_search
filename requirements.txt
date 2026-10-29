@@ -1,3 +1,7 @@
+# Install CPU-only torch first to save ~2 GB of disk:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch
+sentence-transformers
 numpy
 pyyaml
 rank-bm25

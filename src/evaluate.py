@@ -24,10 +24,10 @@ TEST_LOG = Path(__file__).resolve().parent.parent / "experiments" / "test_runs.l
 def evaluate(pipeline: Pipeline, queries: list[dict], unanswerable: list[dict]) -> dict:
     per_query = []
     for q in queries:
-        ranked = pipeline.rank(q["query"], max(KS))
+        ranked, reason = pipeline.retrieve(q["query"], max(KS))
         gold = [(s["file_path"], *s["span"]) for s in q["snippets"]]
-        row = {"query": q["query"], "abstained": pipeline.should_abstain(ranked[:pipeline.config["top_k"]]),
-               "ranked": ranked}
+        row = {"query": q["query"], "gold": gold, "ranked": ranked,
+               "abstained": reason is not None, "abstain_reason": reason}
         for k in KS:
             retrieved = [(r["file_path"], r["start"], r["end"]) for r in ranked[:k]]
             row[f"precision@{k}"], row[f"recall@{k}"] = precision_recall(retrieved, gold)
@@ -36,8 +36,9 @@ def evaluate(pipeline: Pipeline, queries: list[dict], unanswerable: list[dict]) 
 
     unans = []
     for u in unanswerable:
-        ranked = pipeline.rank(u["query"], pipeline.config["top_k"])
-        unans.append({"id": u["id"], "category": u["category"], "abstained": pipeline.should_abstain(ranked)})
+        ranked, reason = pipeline.retrieve(u["query"], pipeline.config["top_k"])
+        unans.append({"id": u["id"], "category": u["category"], "query": u["query"],
+                      "abstained": reason is not None, "abstain_reason": reason, "ranked": ranked})
 
     def mean(xs):
         return sum(xs) / len(xs) if xs else float("nan")
