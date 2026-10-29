@@ -16,7 +16,7 @@ Requires **Python 3.11** (tested on 3.11.8, Windows 11, CPU only; no GPU needed)
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate      macOS/Linux: source .venv/bin/activate
-pip install torch --index-url https://download.pytorch.org/whl/cpu   # CPU build, ~2 GB smaller
+pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu   # CPU build, ~2 GB smaller
 pip install -r requirements.txt
 ```
 
