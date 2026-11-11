@@ -123,9 +123,3 @@ Where the brief left room for interpretation:
 8. **Counting test runs.** Each `python -m src.evaluate --split test` invocation counts as one run and
    is logged automatically.
 
-## AI tool usage
-
-Claude was used as a pair programmer: to read the dataset card and the
-LegalBench-RAG source code, to write first drafts of modules, tests and documentation, and to
-debug. Design decisions (metrics, objective and guardrails, the unanswerable set, which components
-to try) were discussed and reviewed by me, and I can explain and modify every part of the code.
